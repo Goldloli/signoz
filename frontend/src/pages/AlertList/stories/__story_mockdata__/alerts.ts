@@ -18,6 +18,7 @@ import {
 	RuletypesMatchTypeDTO,
 	RuletypesPanelTypeDTO,
 	RuletypesQueryTypeDTO,
+	RuletypesRuleDTOSchemaVersion,
 	RuletypesRuleTypeDTO,
 	RuletypesSeasonalityDTO,
 	RuletypesThresholdBasicDTOKind,
@@ -34,7 +35,6 @@ import {
 	type AlertmanagertypesGettableNotificationChannelDTO,
 	type AlertmanagertypesListedNotificationChannelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -383,17 +383,15 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 		},
 		evalWindow: isAnomaly ? '1h0m0s' : '5m0s',
 		frequency: '1m0s',
-		...(isAnomaly && {
-			evaluation: {
-				kind: RuletypesEvaluationRollingDTOKind.rolling,
-				spec: { evalWindow: '1h0m0s', frequency: '1m0s' },
-			},
-		}),
+		evaluation: {
+			kind: RuletypesEvaluationRollingDTOKind.rolling,
+			spec: { evalWindow: isAnomaly ? '1h0m0s' : '5m0s', frequency: '1m0s' },
+		},
 		createdAt: ago((index + 3) * DAY),
 		updatedAt: ago((index + 1) * HOUR),
 		createdBy: 'ada@signoz.io',
 		updatedBy: 'grace@signoz.io',
-		schemaVersion: NEW_ALERT_SCHEMA_VERSION,
+		schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
 		version: 'v5',
 		source: 'http://localhost/alerts',
 		preferredChannels: ['ops-slack'],
@@ -847,6 +845,22 @@ export const channelNames = (count: number): string[] =>
 		(_unused, index) => CHANNEL_SEEDS[index % CHANNEL_SEEDS.length].name,
 	);
 
+export const WEBHOOK_AUTHS = ['basic', 'bearer', 'none'] as const;
+
+export type WebhookAuthChoice = (typeof WEBHOOK_AUTHS)[number];
+
+const WEBHOOK_CREDENTIALS: Record<WebhookAuthChoice, Record<string, string>> = {
+	basic: { username: 'story-user' },
+	bearer: { bearerToken: 'story-bearer-token' },
+	none: {},
+};
+
+const webhookSpec = (auth: WebhookAuthChoice): Record<string, unknown> => ({
+	url: 'https://example.com/story-hook',
+	...WEBHOOK_CREDENTIALS[auth],
+	sendResolved: true,
+});
+
 /**
  * The v2 spec each kind is fetched with, so the edit form renders populated
  * fields. Keys mirror the generated channel spec schemas.
@@ -875,11 +889,7 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 		],
 		sendResolved: true,
 	},
-	webhook: {
-		url: 'https://example.com/story-hook',
-		username: 'story-user',
-		sendResolved: true,
-	},
+	webhook: webhookSpec('basic'),
 	pagerduty: {
 		routingKey: 'story-routing-key',
 		description: '{{ .CommonLabels.alertname }}',
@@ -943,6 +953,7 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 export const notificationChannelResponse = (
 	id: string,
 	type: ChannelType,
+	webhookAuth: WebhookAuthChoice = 'basic',
 ): {
 	status: string;
 	data: AlertmanagertypesGettableNotificationChannelDTO;
@@ -963,7 +974,7 @@ export const notificationChannelResponse = (
 			updatedAt: ago((index + 1) * DAY),
 			config: {
 				kind: type,
-				spec: CHANNEL_SPECS[type],
+				spec: type === 'webhook' ? webhookSpec(webhookAuth) : CHANNEL_SPECS[type],
 			} as unknown as AlertmanagertypesChannelConfigDTO,
 		},
 	};

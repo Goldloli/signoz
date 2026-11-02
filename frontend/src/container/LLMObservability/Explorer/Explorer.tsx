@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAppSearchParams } from 'lib/router/useAppSearchParams';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
-import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
@@ -61,7 +60,7 @@ function Explorer(): JSX.Element {
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
-	const [searchParams] = useSearchParams();
+	const [searchParams] = useAppSearchParams();
 	const queryClient = useQueryClient();
 	const listQueryKeyRef = useRef<any>();
 
@@ -225,11 +224,9 @@ function Explorer(): JSX.Element {
 							}
 						/>
 					</div>
-					<ExplorerCard sourcepage={DataSource.TRACES}>
-						<div className="query-section-container">
-							<QuerySection />
-						</div>
-					</ExplorerCard>
+					<div className="query-section-container">
+						<QuerySection />
+					</div>
 
 					<div className="traces-explorer-views">
 						{isCancelled && (

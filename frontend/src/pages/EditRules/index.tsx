@@ -15,7 +15,7 @@ import EditAlertV2 from 'container/EditAlertV2';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
 
 import './EditRules.styles.scss';
@@ -46,7 +46,7 @@ function EditRules(): JSX.Element {
 		params.delete(QueryParams.panelTypes);
 		params.delete(QueryParams.ruleId);
 		params.delete(QueryParams.relativeTime);
-		history.push(`${ROUTES.LIST_ALL_ALERT}?${params.toString()}`);
+		navigate(`${ROUTES.LIST_ALL_ALERT}?${params.toString()}`);
 	};
 
 	useEffect(() => {

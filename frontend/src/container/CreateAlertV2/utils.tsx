@@ -4,7 +4,6 @@ import { Spin } from 'antd';
 import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { v4 } from 'uuid';
@@ -54,7 +53,9 @@ export function getColorForThreshold(thresholdLabel: string): string {
 	if (thresholdLabel === 'info') {
 		return Color.BG_ROBIN_500;
 	}
-	return getRandomColor();
+	const colorKeys = Object.keys(Color) as (keyof typeof Color)[];
+	const randomKey = colorKeys[Math.floor(Math.random() * colorKeys.length)];
+	return Color[randomKey];
 }
 
 export function parseGoTime(input: string): {
